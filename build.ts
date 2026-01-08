@@ -6,46 +6,52 @@ import { flavorEntries, flavors } from "@catppuccin/palette";
 import { updateReadme } from "@catppuccin/deno-lib";
 
 const __dirname = path.dirname(path.fromFileUrl(import.meta.url));
-const accents = flavors.dark.colorEntries
-  .filter(([_, { accent }]) => accent)
-  .map(([accentName]) => accentName);
+const accentColorMap: Record<string, string> = { gray: "subtext0" };
+const extraAccents = Object.keys(accentColorMap);
+const accents = [
+  ...flavors.dark.colorEntries
+    .filter(([_, { accent }]) => accent)
+    .map(([accentName]) => accentName),
+  ...extraAccents,
+];
 
 Deno.mkdirSync(path.join(__dirname, "dist"), { recursive: true });
 
-const sassBuilder = (flavor: string, accent: string) => `
+const sassBuilder = (flavor: string, accent: string) => {
+  const scssVar = accentColorMap[accent] ?? accent;
+  return `
 @import "@catppuccin/palette/scss/${flavor}";
-$accent: $${accent};
+$accent: $${scssVar};
 $isDark: ${flavor !== "light"};
 @import "theme";
 `;
+};
 
-flavorEntries.forEach(([flavorName, flavor]) => {
-  flavor.colorEntries
-    .filter(([_, { accent }]) => accent)
-    .forEach(([accentName]) => {
-      const input = sassBuilder(flavorName, accentName);
-      const result = sass.compileString(input, {
-        loadPaths: [
-          path.join(__dirname, "src"),
-          path.join(__dirname, "node_modules"),
-        ],
-      });
-
-      Deno.writeTextFileSync(
-        path.join(
-          __dirname,
-          "dist",
-          `theme-catppuccin-${flavorName}-${accentName}.css`,
-        ),
-        result.css,
-      );
-
-      Deno.writeTextFileSync(
-        path.join(__dirname, "dist", `theme-catppuccin-${accentName}-auto.css`),
-        `@import "./theme-catppuccin-light-${accentName}.css" (prefers-color-scheme: light);
-@import "./theme-catppuccin-dark-${accentName}.css" (prefers-color-scheme: dark);`,
-      );
+flavorEntries.forEach(([flavorName]) => {
+  accents.forEach((accentName) => {
+    const input = sassBuilder(flavorName, accentName);
+    const result = sass.compileString(input, {
+      loadPaths: [
+        path.join(__dirname, "src"),
+        path.join(__dirname, "node_modules"),
+      ],
     });
+
+    Deno.writeTextFileSync(
+      path.join(
+        __dirname,
+        "dist",
+        `theme-catppuccin-${flavorName}-${accentName}.css`,
+      ),
+      result.css,
+    );
+
+    Deno.writeTextFileSync(
+      path.join(__dirname, "dist", `theme-catppuccin-${accentName}-auto.css`),
+      `@import "./theme-catppuccin-light-${accentName}.css" (prefers-color-scheme: light);
+@import "./theme-catppuccin-dark-${accentName}.css" (prefers-color-scheme: dark);`,
+    );
+  });
 });
 
 const flavorAccentIni = `
