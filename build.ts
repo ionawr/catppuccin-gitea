@@ -6,7 +6,7 @@ import { flavorEntries, flavors } from "@catppuccin/palette";
 import { updateReadme } from "@catppuccin/deno-lib";
 
 const __dirname = path.dirname(path.fromFileUrl(import.meta.url));
-const accents = flavors.mocha.colorEntries
+const accents = flavors.dark.colorEntries
   .filter(([_, { accent }]) => accent)
   .map(([accentName]) => accentName);
 
@@ -15,7 +15,7 @@ Deno.mkdirSync(path.join(__dirname, "dist"), { recursive: true });
 const sassBuilder = (flavor: string, accent: string) => `
 @import "@catppuccin/palette/scss/${flavor}";
 $accent: $${accent};
-$isDark: ${flavor !== "latte"};
+$isDark: ${flavor !== "light"};
 @import "theme";
 `;
 
@@ -42,8 +42,8 @@ flavorEntries.forEach(([flavorName, flavor]) => {
 
       Deno.writeTextFileSync(
         path.join(__dirname, "dist", `theme-catppuccin-${accentName}-auto.css`),
-        `@import "./theme-catppuccin-latte-${accentName}.css" (prefers-color-scheme: light);
-@import "./theme-catppuccin-mocha-${accentName}.css" (prefers-color-scheme: dark);`,
+        `@import "./theme-catppuccin-light-${accentName}.css" (prefers-color-scheme: light);
+@import "./theme-catppuccin-dark-${accentName}.css" (prefers-color-scheme: dark);`,
       );
     });
 });
